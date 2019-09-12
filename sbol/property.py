@@ -22,7 +22,7 @@ class Property(ABC):
     """
 
     def __init__(self, property_owner, type_uri, lower_bound, upper_bound,
-                 validation_rules, initial_value=None):
+                 validation_rules=None, initial_value=None):
         """Construct a Property.
 
         :param property_owner: All Property objects must have a pointer back
@@ -60,8 +60,10 @@ class Property(ABC):
             raise ValueError("RDF type must be URIRef or str")
         self._lowerBound = lower_bound
         self._upperBound = upper_bound
-        self._validation_rules = []
-        self._validation_rules = validation_rules
+        if validation_rules is None:
+            self._validation_rules = []
+        else:
+            self._validation_rules = validation_rules
         self.value = initial_value
 
     def getTypeURI(self):
