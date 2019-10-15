@@ -136,12 +136,17 @@ class SBOLObject:
         return None
 
     def cacheObjects(self, objectCache):
-        """TODO document
-
+        """Recursively saves SBOL objects into a dictionary,
+        allowing SBOL to avoid parsing an object that already exists in the
+        Document.
         :param objectCache: a dictionary mapping strings to SBOLObjects
         :return: None
         """
-        raise NotImplementedError("Not yet implemented")
+        # identity comes back as a str, so we must cast...
+        objectCache[URIRef(self.identity)] = self
+        for object_store in self.owned_objects.values():
+            for obj in object_store:
+                obj.cacheObjects(objectCache)
 
     def find_property(self, uri):
         """Search this object recursively to see if it contains

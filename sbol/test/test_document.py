@@ -74,6 +74,18 @@ class TestDocument(unittest.TestCase):
         self.assertEqual(len(doc), 31)
         # print(doc)
 
+    def test_cacheObjects(self):
+        setHomespace('http://sbols.org/CRISPR_Example')
+        Config.setOption('sbol_compliant_uris', True)
+        Config.setOption('sbol_typed_uris', False)
+        # Config.setOption('sbol_compliant_uris', False)
+        doc = Document()
+        crpb = ComponentDefinition(uri='CRP_b',
+                                   component_type=BIOPAX_DNA, version='1.0.0')
+        doc.addComponentDefinition(crpb)
+        doc.append(TEST_LOCATION)
+        self.assertEquals(doc.skippedObjectCount, 1)
+
 
 if __name__ == '__main__':
     unittest.main()

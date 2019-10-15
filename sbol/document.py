@@ -95,7 +95,11 @@ class Document(Identified):
         # Updated when writing a graph.
         self.graph = None
         # The Document's register of objects
-        self.objectCache = {}  # Needed?
+        self.objectCache = {}  # Useful optimization that reduces parsing
+        # The 'skipped object count' variable is used to track how many
+        # objects we've skipped over, because they were in the object cache.
+        # It's main purpose is for debugging and testing.
+        self.skippedObjectCount = 0
         self.SBOLObjects = {}  # Needed?
         self._namespaces = {}
         self.resource_namespaces = set()
@@ -378,6 +382,11 @@ class Document(Identified):
         :return: None
         """
         self.logger.debug("Appending data from file: " + filename)
+
+        # Recursively cache all items in this document so as to avoid
+        # parsing them from the file.
+        self.cacheObjectsDocument()
+
         with open(filename, 'r') as f:
             if not self.graph:
                 self.graph = rdflib.Graph()
@@ -461,6 +470,11 @@ class Document(Identified):
     def parse_objects_inner(self, subject, obj):
         # Construct the top-level object if we haven't already done so
         # and its type is something we know about.
+        if subject in self.objectCache:
+            self.logger.debug('Found "' + subject + '" in object cache...')
+            self.skippedObjectCount += 1
+            return
+
         if subject not in self.SBOLObjects and obj in self.SBOL_DATA_MODEL_REGISTER:
             # Call constructor for the appropriate SBOLObject
             new_obj = self.SBOL_DATA_MODEL_REGISTER[obj]()
@@ -681,8 +695,16 @@ class Document(Identified):
             return ret
 
     def cacheObjectsDocument(self):
-        # TODO docstring
-        raise NotImplementedError("Not yet implemented")
+        """Recursively saves the Document's SBOL objects into a dictionary,
+        allowing SBOL to avoid parsing an object that already exists in the
+        Document.
+
+        :return: None
+        """
+        self.objectCache.clear()
+        self.skippedObjectCount = 0
+        for obj in self.SBOLObjects.values():
+            obj.cacheObjects(self.objectCache)
 
     def referenceNamespace(self, uri):
         """Replaces the namespace with a reference
